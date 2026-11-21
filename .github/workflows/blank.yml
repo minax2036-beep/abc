@@ -14,14 +14,13 @@ jobs:
       - name: Patch twrpdtgen for Android 16
         run: |
           python3 -c '
-          import sebaubuntu_libs.libandroid.device_info as d
-          import sebaubuntu_libs.libandroid.fstab as f
+          import re, sebaubuntu_libs.libandroid.device_info as d, sebaubuntu_libs.libandroid.fstab as f
           with open(d.__file__, "r") as fp: s = fp.read()
           s = s.replace("self.first_api_level = self.get_first_prop(FIRST_API_LEVEL)", "self.first_api_level = \"36\"")
           with open(d.__file__, "w") as fp: fp.write(s)
           with open(f.__file__, "r") as fp: s = fp.read()
-          s = s.replace("src, mount_point, fs_type, mnt_flags, fs_flags = line.split()", "parts = line.split()\n        if len(parts) < 5: return None\n        src, mount_point, fs_type, mnt_flags, fs_flags = parts[:5]")
-          s = s.replace("self.entries.append(FstabEntry.from_entry(line))", "entry = FstabEntry.from_entry(line)\n            if entry: self.entries.append(entry)")
+          s = re.sub(r"([ \t]+)src, mount_point, fs_type, mnt_flags, fs_flags = line\.split\(\)", r"\1parts = line.split()\n\1if len(parts) < 5: return None\n\1src, mount_point, fs_type, mnt_flags, fs_flags = parts[:5]", s)
+          s = re.sub(r"([ \t]+)self\.entries\.append\(FstabEntry\.from_entry\(line\)\)", r"\1entry = FstabEntry.from_entry(line)\n\1if entry: self.entries.append(entry)", s)
           with open(f.__file__, "w") as fp: fp.write(s)
           '
       - run: python3 -m twrpdtgen target.img -o output
