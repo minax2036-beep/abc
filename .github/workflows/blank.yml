@@ -1,4 +1,4 @@
-#name: Generate TWRP Device Tree
+name: Generate TWRP Device Tree
 on:
   workflow_dispatch:
     inputs:
@@ -9,8 +9,12 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - run: sudo apt-get update && sudo apt-get install -y cpio git python3-pip && pip3 install twrpdtgen
+      - run: sudo apt-get update && sudo apt-get install -y cpio git python3-pip lz4 && pip3 install twrpdtgen
       - run: wget -O target.img "${{ github.event.inputs.img_url }}"
+      - name: Patch twrpdtgen for Android 15
+        run: |
+          FILE=$(python3 -c "import sebaubuntu_libs.libandroid.device_info as m; print(m.__file__)")
+          sed -i 's/self.first_api_level = self.get_first_prop(FIRST_API_LEVEL)/self.first_api_level = "35"/g' "$FILE"
       - run: python3 -m twrpdtgen target.img -o output
       - uses: actions/upload-artifact@v4
         with:
