@@ -1,0 +1,31 @@
+name: Generate TWRP Device Tree
+on:
+  workflow_dispatch:
+    inputs:
+      img_url:
+        description: 'Direct URL to vendor_boot.img or boot.img'
+        required: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cpio git python3-pip
+          pip3 install twrpdtgen
+
+      - name: Download Image
+        run: |
+          wget -O target.img "${{ github.event.inputs.img_url }}"
+
+      - name: Run twrpdtgen
+        run: |
+          python3 -m twrpdtgen target.img -o output
+
+      - name: Upload Device Tree
+        uses: actions/upload-artifact@v4
+        with:
+          name: device-tree
+          path: output/
